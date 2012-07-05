@@ -40,6 +40,20 @@ test("empty object", function() {
 
 });
 
+test("simple object", function() {
+    var obj = {a: "b", "c": "d", 0: 1, "e": null};
+    Perseus.storeObject('simple obj', obj);
+    ok(obj.equals(Perseus.lookupObject('simple obj')));
+
+});
+
+test("nested object", function() {
+    var obj = {a: "b", "c": { ok: "d", 0: { 1: { 2: 3 } } }, "e": null};
+    Perseus.storeObject('nested obj', obj);
+    ok(obj.equals(Perseus.lookupObject('simple obj')));
+
+});
+
 test("empty array", function() {
     var obj = [];
     Perseus.storeObject('empty array', obj);

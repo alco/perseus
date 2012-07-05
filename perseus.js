@@ -52,6 +52,10 @@ var Perseus = new function() {
             result = obj.val;
             break;
 
+        case "null":
+            result = null;
+            break;
+
         case "object":
             result = {};
             for (var prop in obj.val) {
@@ -100,12 +104,15 @@ var Perseus = new function() {
                 var val = obj[prop];
                 db_object[prop] = serialize(val);
             }
+            db_object = { type: "object", val: db_object };
         } else if (_.isFunction(obj)) {
             db_object = { type: "function", val: obj.toString() };
         } else if (_.isNumber(obj)) {
             db_object = { type: "number", val: obj };
         } else if (_.isString(obj)) {
             db_object = { type: "string", val: obj };
+        } else if (_.isNull(obj)) {
+            db_object = { type: "null" };
         } else {
             db_object = { type: "object", val: obj };
         }
