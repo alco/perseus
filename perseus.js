@@ -40,7 +40,7 @@ var Perseus = new function() {
             break;
 
         case "function":
-            eval(obj.val);
+            eval("var f = " + obj.val);
             result = f;
             break;
 

@@ -1,147 +1,142 @@
-Object.prototype.equals = function(x)
-{
-  var p;
-  for(p in this) {
-      if(typeof(x[p])=='undefined') {return false;}
-  }
-
-  for(p in this) {
-      if (this[p]) {
-          switch(typeof(this[p])) {
-              case 'object':
-                  if (!this[p].equals(x[p])) { return false; } break;
-              case 'function':
-                  if (typeof(x[p])=='undefined' ||
-                      (p != 'equals' && this[p].toString() != x[p].toString()))
-                      return false;
-                  break;
-              default:
-                  if (this[p] != x[p]) { return false; }
-          }
-      } else {
-          if (x[p])
-              return false;
-      }
-  }
-
-  for(p in x) {
-      if(typeof(this[p])=='undefined') {return false;}
-  }
-
-  return true;
+function isArray(x) {
+    return Array.isArray(x) || toString.call(x) === '[object Array]';
 }
 
-module("Perseus")
+///
+
+module("Perseus.object")
 
 test("empty object", function() {
+    var key = 'empty obj';
     var obj = {};
-    Perseus.storeObject('empty obj', obj);
-    ok(obj.equals(Perseus.lookupObject('empty obj')));
+    Perseus.storeObject(key, obj);
+
+    var new_obj = Perseus.lookupObject(key);
+    deepEqual(new_obj, obj);
+    notDeepEqual(new_obj, {'':''});
+    notDeepEqual(new_obj, []);
 
 });
 
 test("simple object", function() {
+    var key = 'simple obj';
     var obj = {a: "b", "c": "d", 0: 1, "e": null};
-    Perseus.storeObject('simple obj', obj);
-    ok(obj.equals(Perseus.lookupObject('simple obj')));
+    Perseus.storeObject(key, obj);
 
+    var new_obj = Perseus.lookupObject(key);
+    deepEqual(new_obj, obj);
+    strictEqual(new_obj.e, obj.e);
+    strictEqual(new_obj[0], obj[0]);
+});
+
+test("object with functions", function() {
+    var key = 'obj w/ fun';
+    var obj = {
+        func: function(x) {
+            this.y = x;
+            return -x;
+        },
+        g: function() {
+            return this.func(-1);
+        },
+    };
+    Perseus.storeObject(key, obj);
+
+    var new_obj = Perseus.lookupObject(key);
+    strictEqual(typeof(new_obj.func), typeof(obj.func));
+    strictEqual(typeof(new_obj.g), typeof(obj.g));
+    var props = [];
+    for (var prop in new_obj)
+        props.push(prop);
+    strictEqual(props.length, 2);
+
+    strictEqual(new_obj.func(1), -1);
+    strictEqual(new_obj.y, 1);
+    strictEqual(new_obj.g(), 1);
+    strictEqual(new_obj.y, -1);
+});
+
+test("object with arrays", function() {
+    var key = 'obj w/ arrays';
+    var obj = {
+        1: [],
+        "a": [1, 2, 3],
+        "b": ['a', 'b', 'c'],
+        "c": [[[[], []], []], []],
+    };
+    Perseus.storeObject(key, obj);
+
+    var new_obj = Perseus.lookupObject(key);
+    ok(isArray(new_obj[1]));
+    ok(isArray(new_obj.a));
+    ok(isArray(new_obj.b));
+    ok(isArray(new_obj.c));
+    deepEqual(new_obj, obj);
 });
 
 test("nested object", function() {
+    var key = 'nested obj';
     var obj = {a: "b", "c": { ok: "d", 0: { 1: { 2: 3 } } }, "e": null};
-    Perseus.storeObject('nested obj', obj);
-    ok(obj.equals(Perseus.lookupObject('simple obj')));
+    Perseus.storeObject(key, obj);
 
+    var new_obj = Perseus.lookupObject(key);
+    deepEqual(new_obj, obj);
 });
 
+///
+
+module("Perseus.array")
+
 test("empty array", function() {
+    var key = 'empty array';
     var obj = [];
-    Perseus.storeObject('empty array', obj);
-    ok(obj.equals(Perseus.lookupObject('empty array')));
+    Perseus.storeObject(key, obj);
+
+    var new_obj = Perseus.lookupObject(key);
+    ok(isArray(new_obj));
+    strictEqual(new_obj.length, 0);
 });
 
 test("number array", function() {
+    var key = 'number array';
     var obj = [1, 2, 0, -.4, 1.3e-8];
-    Perseus.storeObject('number array', obj);
-    ok(obj.equals(Perseus.lookupObject('number array')));
+    Perseus.storeObject(key, obj);
+
+    var new_obj = Perseus.lookupObject(key);
+    ok(isArray(new_obj));
+    deepEqual(new_obj, obj);
+    strictEqual(new_obj.length, obj.length);
 });
 
 test("string array", function() {
+    var key = 'string array';
     var obj = ["", "a", 'hello', '-1'];
-    Perseus.storeObject('string array', obj);
-    ok(obj.equals(Perseus.lookupObject('string array')));
+    Perseus.storeObject(key, obj);
+
+    var new_obj = Perseus.lookupObject(key);
+    ok(isArray(new_obj));
+    deepEqual(new_obj, obj);
+    strictEqual(new_obj.length, obj.length);
 });
 
 test("interleaved array", function() {
+    var key = 'interleaved array';
     var obj = ["", 0, 2, "bye", {}];
-    Perseus.storeObject('interleaved array', obj);
-    ok(obj.equals(Perseus.lookupObject('interleaved array')));
+    Perseus.storeObject(key, obj);
+
+    var new_obj = Perseus.lookupObject(key);
+    ok(isArray(new_obj));
+    deepEqual(new_obj, obj);
+    strictEqual(new_obj.length, obj.length);
 });
 
 test("nested array", function() {
+    var key = 'nested array';
     var obj = ["", ["a", []], ['hello', ['-1']]];
-    Perseus.storeObject('nested array', obj);
-    ok(obj.equals(Perseus.lookupObject('nested array')));
+    Perseus.storeObject(key, obj);
+
+    var new_obj = Perseus.lookupObject(key);
+    ok(isArray(new_obj));
+    deepEqual(new_obj, obj);
+    strictEqual(new_obj.length, obj.length);
 });
-
-/*
-test("set:add", function() {
-  var set = new Set()
-  for (var i = 0; i < 100; ++i) {
-    set.add(i)
-  }
-  equal(set.length, 100, "Set must have exactly 100 elements")
-  ok(set.contains(99), "99 must be in the set")
-  ok(!set.contains(100), "100 must not be in the set")
-
-  for (var i = 50; i < 101; ++i) {
-    set.add(i)
-  }
-  equal(set.length, 101, "Now the set has 101 elements")
-  ok(set.contains(100), "100 is now in the set")
-  ok(!set.contains(101), "101 is not yet in the set")
-})
-
-test("set:remove", function() {
-  var set = new Set([1, 2, 3, 3, 3, 4, 5, 6, 7, 8, 8, 9, 10, 10])
-  equal(set.length, 10, "Set length must be 10")
-
-  ok(set.contains(3), "3 is in the set")
-  set.remove(3)
-  equal(set.length, 9, "One element less")
-  ok(!set.contains(3), "3 is not in the set")
-
-  set.remove(3)
-  equal(set.length, 9, "The same length")
-  ok(!set.contains(3), "3 is not here already")
-})
-
-test("set:join", function() {
-  var set = new Set([1,2,3,4,5])
-  var second_set = new Set([3,4,5,6,7,8,9])
-
-  var joined = set.splice(second_set)
-  for (var i = 1; i < 10; ++i)
-    ok(joined.contains(i), "Joined must contain " + i)
-  equal(joined.length, 9, "It must have exactly 9 elements")
-  same(joined.items(), ["1","2","3","4","5","6","7","8","9"])
-  equal(set.length, 5, "First set is left intact")
-  equal(second_set.length, 7, "Second set as well")
-})
-
-
-test("set:pick", function() {
-  var set = new Set([1,2,3,4,5,6])
-
-  equal(set.length, 6)
-  var failCounter = 10
-  var iterCounter = 0
-  while (!set.isEmpty()) {
-    ++iterCounter
-    console.log(set.pick())
-    if (--failCounter == 0) break
-  }
-  equal(iterCounter, 6, "Exactly 6 iterations expected")
-  equal(set.length, 0)
-})
-*/
